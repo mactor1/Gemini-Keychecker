@@ -1,5 +1,5 @@
 [package]
-name = "Gemini-Keychecker"
+name = "gemini-keychecker"
 version = "0.1.0"
 edition = "2024"
 
