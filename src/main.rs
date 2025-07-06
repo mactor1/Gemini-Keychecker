@@ -43,7 +43,7 @@ struct KeyCheckerConfig {
     #[arg(long, short = 'c', default_value_t = 30)]
     concurrency: usize,
 
-    /// Optional proxy URL for HTTP requests
+    /// Optional proxy URL for HTTP requests (supports http://user:pass@host:port)
     #[arg(long, short = 'x')]
     proxy: Option<Url>,
 }
@@ -163,7 +163,16 @@ fn build_client(config: &KeyCheckerConfig) -> Result<Client> {
     
     // Add proxy configuration if specified
     if let Some(proxy_url) = &config.proxy {
-        client_builder = client_builder.proxy(reqwest::Proxy::all(proxy_url.clone())?);
+        let mut proxy = reqwest::Proxy::all(proxy_url.clone())?;
+        
+        // Extract username and password from URL if present
+        if !proxy_url.username().is_empty() {
+            let username = proxy_url.username();
+            let password = proxy_url.password().unwrap_or("");
+            proxy = proxy.basic_auth(username, password);
+        }
+        
+        client_builder = client_builder.proxy(proxy);
     }
     
     client_builder.build().map_err(Into::into)
