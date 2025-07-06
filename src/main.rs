@@ -1,19 +1,20 @@
 use anyhow::Result;
+use async_stream::stream;
+use backon::{ExponentialBuilder, Retryable};
 use clap::Parser;
+use futures::{pin_mut, stream::StreamExt};
 use regex::Regex;
 use reqwest::{Client, StatusCode};
 use std::{
     collections::HashSet,
     fs,
-    path::PathBuf,
-    sync::{Arc, LazyLock},
+    io::Write,
+    path::{Path, PathBuf},
+    sync::LazyLock,
+    thread::spawn,
     time::Instant,
 };
-use tokio::{
-    sync::Semaphore,
-    task::JoinSet,
-    time::{Duration, sleep},
-};
+use tokio::time::Duration;
 use url::Url;
 static API_KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^AIzaSy.{33}$").unwrap());
 #[derive(Parser, Debug)]
@@ -40,7 +41,7 @@ enum KeyStatus {
     Invalid,
     Retryable(String),
 }
-fn load_keys(path: &PathBuf) -> Result<Vec<String>> {
+fn load_keys(path: &Path) -> Result<Vec<String>> {
     let keys_txt = fs::read_to_string(path)?;
     let unique_keys_set: HashSet<&str> = keys_txt
         .lines()
@@ -52,19 +53,46 @@ fn load_keys(path: &PathBuf) -> Result<Vec<String>> {
     Ok(keys)
 }
 
-fn output_file_txt(keys: &[String], output_path: &PathBuf) -> Result<()> {
-    let content = keys.join("\n");
-    fs::write(output_path, content)?;
-    println!(
-        "Successfully wrote {} keys to {:?}",
-        keys.len(),
-        output_path
-    );
-    Ok(())
+async fn validate_key_with_retry(client: &Client, api_host: &Url, key: String) -> Option<String> {
+    let retry_policy = ExponentialBuilder::default()
+        .with_max_times(3)
+        .with_min_delay(Duration::from_secs(3))
+        .with_max_delay(Duration::from_secs(8));
+
+    let result = (|| async {
+        match keytest(&client, &api_host, &key).await {
+            Ok(KeyStatus::Valid) => {
+                println!("Key: {}... -> SUCCESS", &key[..10]);
+                Ok(Some(key.clone()))
+            }
+            Ok(KeyStatus::Invalid) => {
+                println!("Key: {}... -> INVALID (Forbidden)", &key[..10]);
+                Ok(None)
+            }
+            Ok(KeyStatus::Retryable(reason)) => {
+                eprintln!("Key: {}... -> RETRYABLE (Reason: {})", &key[..10], reason);
+                Err(anyhow::anyhow!("Retryable error: {}", reason))
+            }
+            Err(e) => {
+                eprintln!("Key: {}... -> NETWORK ERROR (Reason: {})", &key[..10], e);
+                Err(e)
+            }
+        }
+    })
+    .retry(retry_policy)
+    .await;
+
+    match result {
+        Ok(key_result) => key_result,
+        Err(_) => {
+            eprintln!("Key: {}... -> FAILED after all retries.", &key[..10]);
+            None
+        }
+    }
 }
 
 async fn keytest(client: &Client, api_host: &Url, keys: &str) -> Result<KeyStatus> {
-    const API_PATH: &str = "v1beta/models/gemini-2.0-flash-exp:generateContent";
+    const API_PATH: &str = "v1beta/models/gemini-2.0-flash:generateContent";
     let full_url = api_host.join(API_PATH)?;
     let request_body = serde_json::json!({
         "contents": [
@@ -110,65 +138,40 @@ async fn main() -> Result<()> {
         .timeout(Duration::from_millis(config.timeout_ms))
         .build()?;
 
-    let semaphore = Arc::new(Semaphore::new(config.concurrency));
-    let mut set = JoinSet::new();
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<String>();
+    let stream = stream! {
+        while let Some(item) = rx.recv().await {
+            yield item;
+        }
+    };
 
-    for key in keys {
-        let client_clone = client.clone();
-        let api_host_clone = config.api_host.clone();
-        let semaphore_clone = Arc::clone(&semaphore);
-
-        set.spawn(async move {
-            const MAX_RETRIES: u32 = 3; 
-            let _permit = semaphore_clone.acquire().await.unwrap();
-            for attempt in 0..MAX_RETRIES {
-                match keytest(&client_clone, &api_host_clone, &key).await {
-                    Ok(KeyStatus::Valid) => {
-                        println!("Key: {}... -> SUCCESS", &key[..10]);
-                        return Some(key);
-                    }
-                    Ok(KeyStatus::Invalid) => {
-                        println!("Key: {}... -> INVALID (Forbidden)", &key[..10]);
-                        return None;
-                    }
-                    Ok(KeyStatus::Retryable(reason)) => {
-                        eprintln!(
-                            "Key: {}... -> RETRYABLE (Attempt {}/{}, Reason: {})",
-                            &key[..10],
-                            attempt + 1,
-                            MAX_RETRIES,
-                            reason
-                        );
-                        if attempt < MAX_RETRIES - 1 {
-                            sleep(Duration::from_secs(2_u64.pow(attempt))).await;
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!(
-                            "Key: {}... -> NETWORK ERROR (Attempt {}/{}, Reason: {})",
-                            &key[..10],
-                            attempt + 1,
-                            MAX_RETRIES,
-                            e
-                        );
-                        if attempt < MAX_RETRIES - 1 {
-                            sleep(Duration::from_secs(2_u64.pow(attempt))).await;
-                        }
-                    }
+    spawn(move || {
+        for key in keys {
+            if API_KEY_REGEX.is_match(&key) {
+                if let Err(e) = tx.send(key) {
+                    eprintln!("Failed to send key: {}", e);
                 }
+            } else {
+                eprintln!("Invalid key format: {}", key);
             }
+        }
+    });
 
-            eprintln!("Key: {}... -> FAILED after all retries.", &key[..10]);
-            None
-        });
-    }
-    let mut valid_keys = Vec::new();
-    while let Some(res) = set.join_next().await {
-        if let Ok(Some(key)) = res {
-            valid_keys.push(key);
+    let valid_keys_stream = stream
+        .map(|key| validate_key_with_retry(&client, &config.api_host, key))
+        .buffer_unordered(config.concurrency)
+        .filter_map(|r| async { r });
+    pin_mut!(valid_keys_stream);
+    // open output file
+    let mut output_file = fs::File::create(&config.output_path)?;
+    // Write valid keys to output file
+    while let Some(valid_key) = valid_keys_stream.next().await {
+        // Collect valid keys
+        println!("Valid key found: {}", valid_key);
+        if let Err(e) = writeln!(output_file, "{}", valid_key) {
+            eprintln!("Failed to write key to output file: {}", e);
         }
     }
-    output_file_txt(&valid_keys, &config.output_path)?;
-    println!("Total cost time:{:?}", start_time.elapsed());
+    println!("Total Elapsed Time: {:?}", start_time.elapsed());
     Ok(())
 }
