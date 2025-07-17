@@ -5,8 +5,8 @@ use reqwest::Client;
 use std::{fs, time::Instant};
 use tokio::sync::mpsc;
 
-use crate::config::KeyCheckerConfig;
 use crate::adapters::write_keys_txt_file;
+use crate::config::KeyCheckerConfig;
 use crate::key_validator::validate_key_with_retry;
 use crate::types::ApiKey;
 
@@ -42,13 +42,15 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| validate_key_with_retry(&self.client, &self.config.api_host, key))
-            .buffer_unordered(self.config.concurrency)
+            .map(|key| {
+                validate_key_with_retry(self.client.to_owned(), self.config.api_host(), key)
+            })
+            .buffer_unordered(self.config.concurrency())
             .filter_map(|r| async { r });
         pin_mut!(valid_keys_stream);
 
         // Open output file for writing valid keys
-        let mut output_file = fs::File::create(&self.config.output_path)?;
+        let mut output_file = fs::File::create(&self.config.output_path())?;
 
         // Process validated keys and write to output file
         while let Some(valid_key) = valid_keys_stream.next().await {

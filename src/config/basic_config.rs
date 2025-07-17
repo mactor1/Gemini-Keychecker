@@ -1,7 +1,8 @@
 use anyhow::{Ok, Result};
+use clap::Parser;
 use figment::{
     Figment,
-    providers::{Env, Format, Toml},
+    providers::{Env, Format, Serialized, Toml},
 };
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -9,46 +10,53 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use url::Url;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Parser)]
 pub struct KeyCheckerConfig {
     // Input file path containing API keys to check.
     #[serde(default)]
-    pub input_path: PathBuf,
+    #[arg(short, long)]
+    input_path: Option<PathBuf>,
 
     // Output file path for valid API keys.
     #[serde(default)]
-    pub output_path: PathBuf,
+    #[arg(short, long)]
+    output_path: Option<PathBuf>,
 
     // Backup file path for all API keys.
     #[serde(default)]
-    pub backup_path: PathBuf,
+    #[arg(short, long)]
+    backup_path: Option<PathBuf>,
 
     // API host URL for key validation.
-    #[serde(default = "default_api_host")]
-    pub api_host: Url,
+    #[serde(default)]
+    #[arg(short, long)]
+    api_host: Option<Url>,
 
     // Request timeout in seconds.
     #[serde(default)]
-    pub timeout_sec: u64,
+    #[arg(short, long)]
+    timeout_sec: Option<u64>,
 
     // Maximum number of concurrent requests.
     #[serde(default)]
-    pub concurrency: usize,
+    #[arg(short, long)]
+    concurrency: Option<usize>,
 
     // Optional proxy URL for HTTP requests (e.g., --proxy http://user:pass@host:port).
     #[serde(default)]
-    pub proxy: Option<Url>,
+    #[arg(short, long)]
+    proxy: Option<Url>,
 }
 
 impl Default for KeyCheckerConfig {
     fn default() -> Self {
         Self {
-            input_path: default_input_path(),
-            output_path: default_output_path(),
-            backup_path: default_backup_path(),
-            api_host: default_api_host(),
-            timeout_sec: default_timeout(),
-            concurrency: default_concurrency(),
+            input_path: Some(default_input_path()),
+            output_path: Some(default_output_path()),
+            backup_path: Some(default_backup_path()),
+            api_host: Some(default_api_host()),
+            timeout_sec: Some(default_timeout()),
+            concurrency: Some(default_concurrency()),
             proxy: None,
         }
     }
@@ -67,16 +75,40 @@ impl KeyCheckerConfig {
 
         // Load configuration from config.toml, environment variables, and defaults
         let config = Figment::new()
+            .merge(Serialized::defaults(Self::default()))
             .merge(Toml::file(CONFIG_PATH.as_path()))
             .merge(Env::prefixed("KEYCHECKER_"))
+            .merge(Serialized::defaults(Self::parse()))
             .extract()?;
         Ok(config)
+    }
+    pub fn input_path(&self) -> PathBuf {
+        self.input_path.clone().unwrap_or_else(default_input_path)
+    }
+    pub fn output_path(&self) -> PathBuf {
+        self.output_path.clone().unwrap_or_else(default_output_path)
+    }
+    pub fn backup_path(&self) -> PathBuf {
+        self.backup_path.clone().unwrap_or_else(default_backup_path)
+    }
+    pub fn api_host(&self) -> Url {
+        self.api_host.clone().unwrap_or_else(default_api_host)
+    }
+    pub fn timeout_sec(&self) -> u64 {
+        self.timeout_sec.unwrap_or_else(default_timeout)
+    }
+    pub fn concurrency(&self) -> usize {
+        self.concurrency.unwrap_or_else(default_concurrency)
+    }
+    pub fn proxy(&self) -> Option<Url> {
+        self.proxy.clone()
     }
 }
 
 fn default_input_path() -> PathBuf {
     "keys.txt".into()
 }
+
 fn default_output_path() -> PathBuf {
     "output_keys.txt".into()
 }
