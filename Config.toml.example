@@ -1,0 +1,7 @@
+input_path = "keys.txt"
+output_path = "output_keys.txt"
+backup_path = "backup_keys.txt"
+api_host = "https://generativelanguage.googleapis.com/"
+timeout_sec = 20
+concurrency = 30
+proxy = "http://username:password@host:port"

@@ -64,7 +64,7 @@ impl Default for KeyCheckerConfig {
 impl KeyCheckerConfig {
     pub fn load_config() -> Result<Self> {
         // Define the path to the configuration file
-        static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| "config.toml".into());
+        static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| "Config.toml".into());
 
         // Check if config.toml exists, if not create it with default values
         if !CONFIG_PATH.exists() {
@@ -74,12 +74,39 @@ impl KeyCheckerConfig {
         }
 
         // Load configuration from config.toml, environment variables, and defaults
-        let config = Figment::new()
+        let mut figment = Figment::new()
             .merge(Serialized::defaults(Self::default()))
             .merge(Toml::file(CONFIG_PATH.as_path()))
-            .merge(Env::prefixed("KEYCHECKER_"))
-            .merge(Serialized::defaults(Self::parse()))
-            .extract()?;
+            .merge(Env::prefixed("KEYCHECKER_"));
+
+        // Only merge non-None command line arguments
+        let cli_args = Self::parse();
+        if let Some(input_path) = cli_args.input_path {
+            figment = figment.merge(("input_path", input_path));
+        }
+        if let Some(output_path) = cli_args.output_path {
+            figment = figment.merge(("output_path", output_path));
+        }
+        if let Some(backup_path) = cli_args.backup_path {
+            figment = figment.merge(("backup_path", backup_path));
+        }
+        if let Some(api_host) = cli_args.api_host {
+            figment = figment.merge(("api_host", api_host));
+        }
+        if let Some(timeout_sec) = cli_args.timeout_sec {
+            figment = figment.merge(("timeout_sec", timeout_sec));
+        }
+        if let Some(concurrency) = cli_args.concurrency {
+            figment = figment.merge(("concurrency", concurrency));
+        }
+        if let Some(proxy) = cli_args.proxy {
+            figment = figment.merge(("proxy", proxy));
+        }
+
+        let config = figment.extract()?;
+
+        println!("Final loaded config: {:?}", config);
+
         Ok(config)
     }
     pub fn input_path(&self) -> PathBuf {
