@@ -9,7 +9,7 @@ pub async fn write_keys_txt_file(
     file: &mut BufWriter<tokio::fs::File>,
     key: &ApiKey,
 ) -> Result<()> {
-    file.write_all(key.as_str().as_bytes()).await?;
+    file.write_all(format!("{}\n", key.as_str()).as_bytes()).await?;
     Ok(())
 }
 

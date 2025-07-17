@@ -3,7 +3,7 @@ use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use reqwest::Client;
 use std::time::Instant;
-use tokio::{fs, sync::mpsc};
+use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 
 use crate::adapters::write_keys_txt_file;
 use crate::config::KeyCheckerConfig;
@@ -58,6 +58,9 @@ impl ValidationService {
                 eprintln!("Failed to write key to output file: {}", e);
             }
         }
+
+        // Flush the buffer to ensure all data is written to the file
+        buffer_writer.flush().await?;
 
         println!("Total Elapsed Time: {:?}", start_time.elapsed());
         Ok(())
