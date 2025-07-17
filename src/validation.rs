@@ -8,7 +8,7 @@ use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 use crate::adapters::write_keys_txt_file;
 use crate::config::KeyCheckerConfig;
 use crate::key_validator::validate_key_with_retry;
-use crate::types::ApiKey;
+use crate::types::GeminiKey;
 
 pub struct ValidationService {
     config: KeyCheckerConfig,
@@ -20,11 +20,11 @@ impl ValidationService {
         Self { config, client }
     }
 
-    pub async fn validate_keys(&self, keys: Vec<ApiKey>) -> Result<()> {
+    pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<()> {
         let start_time = Instant::now();
 
         // Create channel for streaming keys from producer to consumer
-        let (tx, mut rx) = mpsc::unbounded_channel::<ApiKey>();
+        let (tx, mut rx) = mpsc::unbounded_channel::<GeminiKey>();
         let stream = stream! {
             while let Some(item) = rx.recv().await {
                 yield item;
@@ -53,7 +53,7 @@ impl ValidationService {
 
         // Process validated keys and write to output file
         while let Some(valid_key) = valid_keys_stream.next().await {
-            println!("Valid key found: {}", valid_key.as_str());
+            println!("Valid key found: {}", valid_key.as_ref());
             if let Err(e) = write_keys_txt_file(&mut buffer_writer, &valid_key).await {
                 eprintln!("Failed to write key to output file: {}", e);
             }
