@@ -2,8 +2,8 @@ use anyhow::Result;
 use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use reqwest::Client;
-use std::{fs, time::Instant};
-use tokio::sync::mpsc;
+use std::time::Instant;
+use tokio::{fs, sync::mpsc};
 
 use crate::adapters::write_keys_txt_file;
 use crate::config::KeyCheckerConfig;
@@ -42,20 +42,19 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| {
-                validate_key_with_retry(self.client.to_owned(), self.config.api_host(), key)
-            })
+            .map(|key| validate_key_with_retry(self.client.to_owned(), self.config.api_host(), key))
             .buffer_unordered(self.config.concurrency())
             .filter_map(|r| async { r });
         pin_mut!(valid_keys_stream);
 
         // Open output file for writing valid keys
-        let mut output_file = fs::File::create(&self.config.output_path())?;
+        let output_file = fs::File::create(&self.config.output_path()).await?;
+        let mut buffer_writer = tokio::io::BufWriter::new(output_file);
 
         // Process validated keys and write to output file
         while let Some(valid_key) = valid_keys_stream.next().await {
             println!("Valid key found: {}", valid_key.as_str());
-            if let Err(e) = write_keys_txt_file(&mut output_file, &valid_key) {
+            if let Err(e) = write_keys_txt_file(&mut buffer_writer, &valid_key).await {
                 eprintln!("Failed to write key to output file: {}", e);
             }
         }
