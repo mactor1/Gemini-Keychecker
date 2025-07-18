@@ -42,13 +42,13 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| validate_key_with_retry(self.client.to_owned(), self.config.api_host(), key))
-            .buffer_unordered(self.config.concurrency())
+            .map(|key| validate_key_with_retry(self.client.to_owned(), self.config.api_host.clone(), key))
+            .buffer_unordered(self.config.concurrency)
             .filter_map(|r| async { r });
         pin_mut!(valid_keys_stream);
 
         // Open output file for writing valid keys
-        let output_file = fs::File::create(&self.config.output_path()).await?;
+        let output_file = fs::File::create(&self.config.output_path).await?;
         let mut buffer_writer = tokio::io::BufWriter::new(output_file);
 
         // Process validated keys and write to output file

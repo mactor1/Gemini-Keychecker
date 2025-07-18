@@ -7,7 +7,7 @@ use gemini_keychecker::validation::ValidationService;
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = KeyCheckerConfig::load_config().unwrap();
-    let keys = load_keys(config.input_path().as_path())?;
+    let keys = load_keys(config.input_path.as_path())?;
     let client = client_builder(&config)?;
 
     let validation_service = ValidationService::new(config, client);

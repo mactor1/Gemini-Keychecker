@@ -61,7 +61,6 @@ pub async fn validate_key_with_retry(
 async fn keytest(client: Client, api_host: &Url, key: &GeminiKey) -> Result<KeyStatus> {
     const API_PATH: &str = "v1beta/models/gemini-2.0-flash-exp:generateContent";
     let full_url = api_host.join(API_PATH)?;
-
     let request_body = serde_json::json!({
         "contents": [
             {
