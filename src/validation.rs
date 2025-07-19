@@ -13,11 +13,17 @@ use crate::types::GeminiKey;
 pub struct ValidationService {
     config: KeyCheckerConfig,
     client: Client,
+    full_url: url::Url,
 }
 
 impl ValidationService {
     pub fn new(config: KeyCheckerConfig, client: Client) -> Self {
-        Self { config, client }
+        let full_url = config.gemini_api_url();
+        Self {
+            config,
+            client,
+            full_url,
+        }
     }
 
     pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<()> {
@@ -42,7 +48,7 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| validate_key_with_retry(self.client.to_owned(), self.config.api_host.clone(), key))
+            .map(|key| validate_key_with_retry(self.client.to_owned(), self.full_url.clone(), key))
             .buffer_unordered(self.config.concurrency)
             .filter_map(|r| async { r });
         pin_mut!(valid_keys_stream);

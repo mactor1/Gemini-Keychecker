@@ -5,6 +5,7 @@ use figment::{
     providers::{Env, Format, Serialized, Toml},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -98,9 +99,14 @@ impl KeyCheckerConfig {
             .merge(Serialized::defaults(Cli::parse()))
             .extract()?;
 
-        dbg!(&config);
-
         Ok(config)
+    }
+
+    /// Returns the complete Gemini API URL for generateContent endpoint
+    pub fn gemini_api_url(&self) -> Url {
+        self.api_host
+            .join("v1beta/models/gemini-2.0-flash-exp:generateContent")
+            .expect("Failed to join API URL")
     }
 }
 
@@ -114,6 +120,22 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     concurrency: 50,
     proxy: None,
 });
+
+// LazyLock for the test message body used in API key validation
+pub static TEST_MESSAGE_BODY: LazyLock<Value> = LazyLock::new(|| {
+    serde_json::json!({
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": "Hi"
+                    }
+                ]
+            }
+        ]
+    })
+});
+
 fn default_api_host() -> Url {
     DEFAULT_CONFIG.api_host.clone()
 }

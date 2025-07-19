@@ -1,15 +1,15 @@
 use anyhow::Result;
 use backon::{ExponentialBuilder, Retryable};
 use reqwest::{Client, StatusCode};
-use serde_json;
 use tokio::time::Duration;
 use url::Url;
 
+use crate::config::TEST_MESSAGE_BODY;
 use crate::types::{GeminiKey, KeyStatus};
 
 pub async fn validate_key_with_retry(
     client: Client,
-    api_host: Url,
+    full_url: Url,
     key: GeminiKey,
 ) -> Option<GeminiKey> {
     let retry_policy = ExponentialBuilder::default()
@@ -17,7 +17,7 @@ pub async fn validate_key_with_retry(
         .with_min_delay(Duration::from_secs(3))
         .with_max_delay(Duration::from_secs(5));
 
-    let result = (async || match keytest(client.to_owned(), &api_host, &key).await {
+    let result = (async || match keytest(client.to_owned(), &full_url, &key).await {
         Ok(KeyStatus::Valid) => {
             println!("Key: {}... -> SUCCESS", &key.as_ref()[..10]);
             Ok(Some(key.clone()))
@@ -58,26 +58,12 @@ pub async fn validate_key_with_retry(
     }
 }
 
-async fn keytest(client: Client, api_host: &Url, key: &GeminiKey) -> Result<KeyStatus> {
-    const API_PATH: &str = "v1beta/models/gemini-2.0-flash-exp:generateContent";
-    let full_url = api_host.join(API_PATH)?;
-    let request_body = serde_json::json!({
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": "Hi"
-                    }
-                ]
-            }
-        ]
-    });
-
+async fn keytest(client: Client, full_url: &Url, key: &GeminiKey) -> Result<KeyStatus> {
     let response = client
-        .post(full_url)
+        .post(full_url.clone())
         .header("Content-Type", "application/json")
         .header("X-goog-api-key", key.as_ref())
-        .json(&request_body)
+        .json(&*TEST_MESSAGE_BODY)
         .send()
         .await?;
 
