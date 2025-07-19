@@ -11,7 +11,7 @@ pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, reqwest::Erro
     let mut builder = Client::builder()
         .timeout(Duration::from_secs(config.timeout_sec))
         .pool_max_idle_per_host(pool_size)
-        .pool_idle_timeout(Duration::from_secs(30));
+        .http2_prior_knowledge();
 
     if let Some(ref proxy_url) = config.proxy {
         builder = builder.proxy(reqwest::Proxy::all(proxy_url.clone())?);
