@@ -6,6 +6,7 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fmt::{self, Display};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -72,6 +73,10 @@ pub struct KeyCheckerConfig {
     // Optional proxy URL for HTTP requests (e.g., --proxy http://user:pass@host:port).
     #[serde(default)]
     pub proxy: Option<Url>,
+
+    // Whether to enable HTTP/2 multiplexing for requests.
+    #[serde(default)]
+    pub enable_multiplexing: bool,
 }
 
 impl Default for KeyCheckerConfig {
@@ -110,6 +115,31 @@ impl KeyCheckerConfig {
     }
 }
 
+impl Display for KeyCheckerConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "API Host: {}", self.api_host)?;
+
+        let proxy_status = match &self.proxy {
+            Some(proxy) => proxy.to_string(),
+            None => "Disabled".to_string(),
+        };
+        writeln!(f, "Proxy: {}", proxy_status)?;
+
+        let protocol_status = if self.enable_multiplexing {
+            "HTTP/2 (Multiplexing Enabled)"
+        } else {
+            "HTTP/1.1 (Multiplexing Disabled)"
+        };
+        writeln!(f, "Protocol: {}", protocol_status)?;
+
+        writeln!(f, "Timeout: {}s", self.timeout_sec)?;
+        writeln!(f, "Concurrency: {}", self.concurrency)?;
+        writeln!(f, "Input: {}", self.input_path.display())?;
+        writeln!(f, "Output: {}", self.output_path.display())?;
+        write!(f, "Backup: {}", self.backup_path.display())
+    }
+}
+
 // Single LazyLock for entire default configuration
 static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerConfig {
     input_path: "keys.txt".into(),
@@ -119,6 +149,7 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     timeout_sec: 15,
     concurrency: 50,
     proxy: None,
+    enable_multiplexing: true,
 });
 
 // LazyLock for the test message body used in API key validation
@@ -134,6 +165,25 @@ pub static TEST_MESSAGE_BODY: LazyLock<Value> = LazyLock::new(|| {
             }
         ]
     })
+});
+
+// ASCII art for Gemini
+pub const GEMINI_ASCII: &str = r#"
+   ______                  _         _ 
+  / ____/___   ____ ___   (_)____   (_)
+ / / __ / _ \ / __ `__ \ / // __ \ / / 
+/ /_/ //  __// / / / / // // / / // /  
+\____/ \___//_/ /_/ /_//_//_/ /_//_/                             
+"#;
+
+// LazyLock for the application banner
+pub static BANNER: LazyLock<String> = LazyLock::new(|| {
+    format!(
+        "{}\n{}\nKey Checker - Configuration Status\n{}",
+        GEMINI_ASCII,
+        "=".repeat(42),
+        "=".repeat(42)
+    )
 });
 
 fn default_api_host() -> Url {
