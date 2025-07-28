@@ -1,8 +1,8 @@
-use crate::config::KeyCheckerConfig;
+use crate::{config::KeyCheckerConfig, error::ValidationError};
 use reqwest::Client;
 use std::time::Duration;
 
-pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, reqwest::Error> {
+pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, ValidationError> {
     // Set the maximum number of connections per host based on concurrency.
     let pool_size = config.concurrency / 2;
 
@@ -18,5 +18,5 @@ pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, reqwest::Erro
         builder = builder.http1_only();
     }
 
-    builder.build()
+    Ok(builder.build()?)
 }

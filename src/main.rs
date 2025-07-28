@@ -1,4 +1,4 @@
-use anyhow::Result;
+use gemini_keychecker::error::ValidationError;
 use gemini_keychecker::{BANNER, config::KeyCheckerConfig, service::start_validation};
 
 use mimalloc::MiMalloc;
@@ -8,7 +8,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 /// Main function - displays banner and starts validation service
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), ValidationError> {
     // Display banner and configuration status at startup
     println!("{BANNER}");
 

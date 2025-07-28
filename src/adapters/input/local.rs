@@ -1,6 +1,6 @@
 use crate::adapters::output::write_keys_to_file;
 use crate::types::GeminiKey;
-use anyhow::Result;
+use crate::error::Result;
 use std::{collections::HashSet, fs, path::Path, str::FromStr};
 
 /// Load and validate API keys from a file

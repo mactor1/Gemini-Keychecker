@@ -1,5 +1,5 @@
 use crate::types::GeminiKey;
-use anyhow::Result;
+use crate::error::Result;
 use std::{fs, io::Write};
 use tokio::io::{AsyncWriteExt, BufWriter};
 use toml::Value;

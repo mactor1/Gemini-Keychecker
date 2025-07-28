@@ -21,13 +21,13 @@ pub async fn validate_key(
                 StatusCode::OK => Ok(api_key),
                 StatusCode::UNAUTHORIZED
                 | StatusCode::FORBIDDEN
-                | StatusCode::TOO_MANY_REQUESTS => Err(ValidationError::KeyUnavailable),
-                _ => Err(ValidationError::HttpRequest(
+                | StatusCode::TOO_MANY_REQUESTS => Err(ValidationError::KeyInvalid),
+                _ => Err(ValidationError::ReqwestError(
                     response.error_for_status().unwrap_err(),
                 )),
             }
         }
-        Err(e) => Err(ValidationError::HttpRequest(e)),
+        Err(e) => Err(ValidationError::ReqwestError(e)),
     }
 }
 

@@ -1,12 +1,12 @@
-use anyhow::Result;
+use crate::error::ValidationError;
 use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use reqwest::Client;
 use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 
-use super::{key_tester::validate_key, http_client::client_builder};
-use crate::adapters::{write_keys_txt_file, load_keys};
+use super::{http_client::client_builder, key_tester::validate_key};
+use crate::adapters::{load_keys, write_keys_txt_file};
 use crate::config::KeyCheckerConfig;
 use crate::types::GeminiKey;
 
@@ -26,7 +26,7 @@ impl ValidationService {
         }
     }
 
-    pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<()> {
+    pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<(), ValidationError> {
         let start_time = Instant::now();
 
         // Create channel for streaming keys from producer to consumer
@@ -74,15 +74,15 @@ impl ValidationService {
 }
 
 /// 启动验证服务 - 封装了所有启动逻辑
-pub async fn start_validation() -> Result<()> {
+pub async fn start_validation() -> Result<(), ValidationError> {
     let config = KeyCheckerConfig::load_config()?;
-    
+
     // 加载密钥
     let keys = load_keys(config.input_path.as_path())?;
-    
+
     // 构建HTTP客户端
     let client = client_builder(&config)?;
-    
+
     // 创建验证服务并启动
     let validation_service = ValidationService::new(config, client);
     validation_service.validate_keys(keys).await
