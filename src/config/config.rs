@@ -162,15 +162,20 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
 // LazyLock for the test message body used in API key validation
 pub static TEST_MESSAGE_BODY: LazyLock<Value> = LazyLock::new(|| {
     serde_json::json!({
-        "contents": [
+      "contents": [
+        {
+          "parts": [
             {
-                "parts": [
-                    {
-                        "text": "Hi"
-                    }
-                ]
+              "text": "Hi"
             }
-        ]
+          ]
+        }
+      ],
+      "generationConfig": {
+        "thinkingConfig": {
+          "thinkingBudget": 0
+        }
+      }
     })
 });
 
