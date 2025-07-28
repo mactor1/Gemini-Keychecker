@@ -2,13 +2,6 @@ use regex::Regex;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
-#[derive(Debug)]
-pub enum KeyStatus {
-    Valid,
-    Invalid,
-    Retryable(String),
-}
-
 #[derive(Debug, Clone)]
 pub struct GeminiKey {
     pub inner: String,

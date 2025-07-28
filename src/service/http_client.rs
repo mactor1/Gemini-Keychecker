@@ -1,8 +1,6 @@
-use std::time::Duration;
-
-use reqwest::Client;
-
 use crate::config::KeyCheckerConfig;
+use reqwest::Client;
+use std::time::Duration;
 
 pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, reqwest::Error> {
     // Set the maximum number of connections per host based on concurrency.
@@ -17,7 +15,7 @@ pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, reqwest::Erro
     }
 
     if !config.enable_multiplexing {
-        builder = builder.http1_only(); 
+        builder = builder.http1_only();
     }
 
     builder.build()

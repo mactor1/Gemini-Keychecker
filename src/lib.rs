@@ -1,8 +1,8 @@
 pub mod adapters;
 pub mod config;
-pub mod key_validator;
+pub mod error;
 pub mod types;
-pub mod validation;
+pub mod service;
 
 // ASCII art for Gemini
 pub const BANNER: &str = r#"
@@ -12,4 +12,3 @@ pub const BANNER: &str = r#"
 / /_/ //  __// / / / / // // / / // /  
 \____/ \___//_/ /_/ /_//_//_/ /_//_/                             
 "#;
-

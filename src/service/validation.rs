@@ -5,9 +5,9 @@ use reqwest::Client;
 use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 
-use crate::adapters::write_keys_txt_file;
+use super::{key_tester::validate_key, http_client::client_builder};
+use crate::adapters::{write_keys_txt_file, load_keys};
 use crate::config::KeyCheckerConfig;
-use crate::key_validator::validate_key_with_retry;
 use crate::types::GeminiKey;
 
 pub struct ValidationService {
@@ -48,9 +48,9 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| validate_key_with_retry(self.client.to_owned(), self.full_url.clone(), key))
+            .map(|key| validate_key(self.client.clone(), self.full_url.clone(), key))
             .buffer_unordered(self.config.concurrency)
-            .filter_map(|r| async { r });
+            .filter_map(|result| async { result.ok() });
         pin_mut!(valid_keys_stream);
 
         // Open output file for writing valid keys
@@ -71,4 +71,19 @@ impl ValidationService {
         println!("Total Elapsed Time: {:?}", start_time.elapsed());
         Ok(())
     }
+}
+
+/// 启动验证服务 - 封装了所有启动逻辑
+pub async fn start_validation() -> Result<()> {
+    let config = KeyCheckerConfig::load_config()?;
+    
+    // 加载密钥
+    let keys = load_keys(config.input_path.as_path())?;
+    
+    // 构建HTTP客户端
+    let client = client_builder(&config)?;
+    
+    // 创建验证服务并启动
+    let validation_service = ValidationService::new(config, client);
+    validation_service.validate_keys(keys).await
 }

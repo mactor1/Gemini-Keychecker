@@ -1,30 +1,20 @@
 use anyhow::Result;
-use gemini_keychecker::{
-    BANNER,
-    adapters::load_keys,
-    config::{KeyCheckerConfig, client_builder},
-    validation::ValidationService,
-};
+use gemini_keychecker::{BANNER, config::KeyCheckerConfig, service::start_validation};
 
 use mimalloc::MiMalloc;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
-/// Main function - orchestrates the key validation process
+/// Main function - displays banner and starts validation service
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = KeyCheckerConfig::load_config().unwrap();
-
     // Display banner and configuration status at startup
     println!("{BANNER}");
+
+    let config = KeyCheckerConfig::load_config()?;
     println!("{config}");
 
-    let keys = load_keys(config.input_path.as_path())?;
-    let client = client_builder(&config)?;
-
-    let validation_service = ValidationService::new(config, client);
-    validation_service.validate_keys(keys).await?;
-
-    Ok(())
+    // Start validation service
+    start_validation().await
 }
