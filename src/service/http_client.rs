@@ -1,8 +1,8 @@
-use crate::{config::KeyCheckerConfig, error::ValidationError};
+use crate::{config::KeyCheckerConfig, error::ValidatorError};
 use reqwest::Client;
 use std::time::Duration;
 
-pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, ValidationError> {
+pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, ValidatorError> {
     // Set the maximum number of connections per host based on concurrency.
     let pool_size = config.concurrency / 2;
 

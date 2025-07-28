@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum ValidationError {
+pub enum ValidatorError {
     #[error("HTTP error: {0}")]
     ReqwestError(#[from] reqwest::Error),
 
@@ -30,4 +30,4 @@ pub enum ValidationError {
     Validation(String),
 }
 
-pub type Result<T> = std::result::Result<T, ValidationError>;
+pub type Result<T> = std::result::Result<T, ValidatorError>;

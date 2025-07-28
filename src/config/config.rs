@@ -1,4 +1,4 @@
-use crate::error::ValidationError;
+use crate::error::ValidatorError;
 use clap::Parser;
 use figment::{
     Figment,
@@ -85,7 +85,7 @@ impl Default for KeyCheckerConfig {
     }
 }
 impl KeyCheckerConfig {
-    pub fn load_config() -> Result<Self, ValidationError> {
+    pub fn load_config() -> Result<Self, ValidatorError> {
         // Define the path to the configuration file
         static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| "Config.toml".into());
 

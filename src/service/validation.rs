@@ -1,4 +1,4 @@
-use crate::error::ValidationError;
+use crate::error::ValidatorError;
 use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use reqwest::Client;
@@ -26,7 +26,7 @@ impl ValidationService {
         }
     }
 
-    pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<(), ValidationError> {
+    pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<(), ValidatorError> {
         let start_time = Instant::now();
 
         // Create channel for streaming keys from producer to consumer
@@ -74,7 +74,7 @@ impl ValidationService {
 }
 
 /// 启动验证服务 - 封装了所有启动逻辑
-pub async fn start_validation() -> Result<(), ValidationError> {
+pub async fn start_validation() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;
 
     // 加载密钥

@@ -4,14 +4,14 @@ use tokio::time::Duration;
 use url::Url;
 
 use crate::config::TEST_MESSAGE_BODY;
-use crate::error::ValidationError;
+use crate::error::ValidatorError;
 use crate::types::GeminiKey;
 
 pub async fn validate_key(
     client: Client,
     api_endpoint: impl IntoUrl,
     api_key: GeminiKey,
-) -> Result<GeminiKey, ValidationError> {
+) -> Result<GeminiKey, ValidatorError> {
     let api_endpoint = api_endpoint.into_url()?;
 
     match send_test_request(client, &api_endpoint, api_key.clone()).await {
@@ -21,13 +21,13 @@ pub async fn validate_key(
                 StatusCode::OK => Ok(api_key),
                 StatusCode::UNAUTHORIZED
                 | StatusCode::FORBIDDEN
-                | StatusCode::TOO_MANY_REQUESTS => Err(ValidationError::KeyInvalid),
-                _ => Err(ValidationError::ReqwestError(
+                | StatusCode::TOO_MANY_REQUESTS => Err(ValidatorError::KeyInvalid),
+                _ => Err(ValidatorError::ReqwestError(
                     response.error_for_status().unwrap_err(),
                 )),
             }
         }
-        Err(e) => Err(ValidationError::ReqwestError(e)),
+        Err(e) => Err(ValidatorError::ReqwestError(e)),
     }
 }
 
