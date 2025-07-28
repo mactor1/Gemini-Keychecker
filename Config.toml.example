@@ -6,3 +6,4 @@ timeout_sec = 20
 concurrency = 30
 proxy = "http://username:password@host:port"
 enable_multiplexing = true
+log_level = "info"

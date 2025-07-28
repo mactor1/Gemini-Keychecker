@@ -59,7 +59,6 @@ impl ValidationService {
 
         // Process validated keys and write to output file
         while let Some(valid_key) = valid_keys_stream.next().await {
-            println!("Valid key found: {}", valid_key.as_ref());
             if let Err(e) = write_keys_txt_file(&mut buffer_writer, &valid_key).await {
                 eprintln!("Failed to write key to output file: {}", e);
             }
@@ -73,7 +72,7 @@ impl ValidationService {
     }
 }
 
-/// 启动验证服务 - 封装了所有启动逻辑
+
 pub async fn start_validation() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;
 

@@ -77,6 +77,9 @@ pub struct KeyCheckerConfig {
     // Whether to enable HTTP/2 multiplexing for requests.
     #[serde(default)]
     pub enable_multiplexing: bool,
+
+    #[serde(default)]
+    pub log_level: String,
 }
 
 impl Default for KeyCheckerConfig {
@@ -110,33 +113,36 @@ impl KeyCheckerConfig {
     /// Returns the complete Gemini API URL for generateContent endpoint
     pub fn gemini_api_url(&self) -> Url {
         self.api_host
-            .join("v1beta/models/gemini-2.0-flash-exp:generateContent")
+            .join("v1beta/models/gemini-2.5-flash-lite:generateContent")
             .expect("Failed to join API URL")
     }
 }
 
 impl Display for KeyCheckerConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "API Host: {}", self.api_host)?;
-
         let proxy_status = match &self.proxy {
             Some(proxy) => proxy.to_string(),
             None => "Disabled".to_string(),
         };
-        writeln!(f, "Proxy: {}", proxy_status)?;
 
         let protocol_status = if self.enable_multiplexing {
             "HTTP/2 (Multiplexing Enabled)"
         } else {
             "HTTP/1.1 (Multiplexing Disabled)"
         };
-        writeln!(f, "Protocol: {}", protocol_status)?;
 
-        writeln!(f, "Timeout: {}s", self.timeout_sec)?;
-        writeln!(f, "Concurrency: {}", self.concurrency)?;
-        writeln!(f, "Input: {}", self.input_path.display())?;
-        writeln!(f, "Output: {}", self.output_path.display())?;
-        write!(f, "Backup: {}", self.backup_path.display())
+        write!(
+            f,
+            "Host={}, Proxy={}, Protocol={}, Timeout={}s, Concurrency={}, Input={}, Output={}, Backup={}",
+            self.api_host,
+            proxy_status,
+            protocol_status,
+            self.timeout_sec,
+            self.concurrency,
+            self.input_path.display(),
+            self.output_path.display(),
+            self.backup_path.display()
+        )
     }
 }
 
@@ -150,6 +156,7 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     concurrency: 50,
     proxy: None,
     enable_multiplexing: true,
+    log_level: "info".to_string(),
 });
 
 // LazyLock for the test message body used in API key validation

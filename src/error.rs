@@ -5,9 +5,6 @@ pub enum ValidatorError {
     #[error("HTTP error: {0}")]
     ReqwestError(#[from] reqwest::Error),
 
-    #[error("Key is unavailable or invalid")]
-    KeyInvalid,
-
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -26,8 +23,11 @@ pub enum ValidatorError {
     #[error("URL parse error: {0}")]
     UrlParse(#[from] url::ParseError),
 
-    #[error("Key validation failed: {0}")]
-    Validation(String),
+    #[error("Key is unavailable or invalid")]
+    KeyInvalid,
+
+    #[error("Invalid Google API key format: {0}")]
+    KeyFormatInvalid(String),
 }
 
 pub type Result<T> = std::result::Result<T, ValidatorError>;

@@ -1,6 +1,7 @@
 use backon::{ExponentialBuilder, Retryable};
 use reqwest::{Client, IntoUrl, StatusCode};
 use tokio::time::Duration;
+use tracing::{debug, error, info, warn};
 use url::Url;
 
 use crate::config::TEST_MESSAGE_BODY;
@@ -15,19 +16,23 @@ pub async fn validate_key(
     let api_endpoint = api_endpoint.into_url()?;
 
     match send_test_request(client, &api_endpoint, api_key.clone()).await {
-        Ok(response) => {
-            let status = response.status();
-            match status {
-                StatusCode::OK => Ok(api_key),
-                StatusCode::UNAUTHORIZED
-                | StatusCode::FORBIDDEN
-                | StatusCode::TOO_MANY_REQUESTS => Err(ValidatorError::KeyInvalid),
-                _ => Err(ValidatorError::ReqwestError(
-                    response.error_for_status().unwrap_err(),
-                )),
+        Ok(_) => {
+            info!("SUCCESS - {}... - Valid key found", &api_key.as_ref()[..10]);
+            Ok(api_key)
+        }
+        Err(e) => {
+            match e.status() {
+                Some(StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS) => {
+                    warn!("INVALID - {}... - {}", &api_key.as_ref()[..10], ValidatorError::KeyInvalid);
+                    Err(ValidatorError::KeyInvalid)
+                }
+                _ => {
+                    let req_error = ValidatorError::ReqwestError(e);
+                    error!("ERROR-  {}... - {}", &api_key.as_ref()[..10], req_error);
+                    Err(req_error)
+                }
             }
         }
-        Err(e) => Err(ValidatorError::ReqwestError(e)),
     }
 }
 
@@ -49,7 +54,7 @@ async fn send_test_request(
             .json(&*TEST_MESSAGE_BODY)
             .send()
             .await?;
-
+        debug!("Response for key {}: {:?}", key.as_ref(), response.status());
         response.error_for_status()
     })
     .retry(&retry_policy)

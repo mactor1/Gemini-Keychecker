@@ -1,3 +1,4 @@
+use crate::error::ValidatorError;
 use regex::Regex;
 use std::str::FromStr;
 use std::sync::LazyLock;
@@ -14,9 +15,8 @@ impl AsRef<str> for GeminiKey {
 }
 
 impl FromStr for GeminiKey {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    type Err = ValidatorError;
+    fn from_str(s: &str) -> Result<Self, ValidatorError> {
         static RE: LazyLock<Regex> =
             LazyLock::new(|| Regex::new(r"^AIzaSy[A-Za-z0-9_-]{33}$").unwrap());
 
@@ -27,7 +27,7 @@ impl FromStr for GeminiKey {
                 inner: cleaned.to_string(),
             })
         } else {
-            Err("Invalid Google API key format")
+            Err(ValidatorError::KeyFormatInvalid(cleaned.to_string()))
         }
     }
 }

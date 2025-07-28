@@ -3,6 +3,7 @@ use crate::error::Result;
 use std::{fs, io::Write};
 use tokio::io::{AsyncWriteExt, BufWriter};
 use toml::Value;
+use tracing::info;
 
 // Write valid key to output file
 pub async fn write_keys_txt_file(
@@ -31,6 +32,6 @@ pub fn write_keys_clewdr_format(file: &mut fs::File, key: &GeminiKey) -> Result<
 pub fn write_keys_to_file(keys: &[String], filename: &str) -> Result<()> {
     let content = keys.join("\n");
     fs::write(filename, content)?;
-    println!("File '{}' created with {} keys", filename, keys.len());
+    info!("File '{}' created with {} keys", filename, keys.len());
     Ok(())
 }
