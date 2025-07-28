@@ -167,24 +167,7 @@ pub static TEST_MESSAGE_BODY: LazyLock<Value> = LazyLock::new(|| {
     })
 });
 
-// ASCII art for Gemini
-pub const GEMINI_ASCII: &str = r#"
-   ______                  _         _ 
-  / ____/___   ____ ___   (_)____   (_)
- / / __ / _ \ / __ `__ \ / // __ \ / / 
-/ /_/ //  __// / / / / // // / / // /  
-\____/ \___//_/ /_/ /_//_//_/ /_//_/                             
-"#;
 
-// LazyLock for the application banner
-pub static BANNER: LazyLock<String> = LazyLock::new(|| {
-    format!(
-        "{}\n{}\nKey Checker - Configuration Status\n{}",
-        GEMINI_ASCII,
-        "=".repeat(42),
-        "=".repeat(42)
-    )
-});
 
 fn default_api_host() -> Url {
     DEFAULT_CONFIG.api_host.clone()
