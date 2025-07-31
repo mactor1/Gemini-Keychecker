@@ -48,7 +48,14 @@ impl ValidationService {
 
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
-            .map(|key| validate_key(self.client.clone(), self.full_url.clone(), key))
+            .map(|key| {
+                validate_key(
+                    self.client.clone(),
+                    self.full_url.clone(),
+                    key,
+                    self.config.clone(),
+                )
+            })
             .buffer_unordered(self.config.concurrency)
             .filter_map(|result| async { result.ok() });
         pin_mut!(valid_keys_stream);
@@ -71,7 +78,6 @@ impl ValidationService {
         Ok(())
     }
 }
-
 
 pub async fn start_validation() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;

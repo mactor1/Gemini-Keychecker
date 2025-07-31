@@ -39,6 +39,10 @@ struct Cli {
     #[serde(skip_serializing_if = "Option::is_none")]
     concurrency: Option<usize>,
 
+    #[arg(short = 'r', long)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_retries: Option<usize>,
+
     #[arg(short = 'x', long)]
     #[serde(skip_serializing_if = "Option::is_none")]
     proxy: Option<Url>,
@@ -65,6 +69,10 @@ pub struct KeyCheckerConfig {
     // Request timeout in seconds.
     #[serde(default)]
     pub timeout_sec: u64,
+
+    // Maximum number of retries for failed requests.
+    #[serde(default)]
+    pub max_retries: usize,
 
     // Maximum number of concurrent requests.
     #[serde(default)]
@@ -154,6 +162,7 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     api_host: Url::parse("https://generativelanguage.googleapis.com/").unwrap(),
     timeout_sec: 15,
     concurrency: 50,
+    max_retries: 2,
     proxy: None,
     enable_multiplexing: true,
     log_level: "info".to_string(),

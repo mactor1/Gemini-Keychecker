@@ -3,6 +3,7 @@ output_path = "output_keys.txt"
 backup_path = "backup_keys.txt"
 api_host = "https://generativelanguage.googleapis.com/"
 timeout_sec = 20
+max_retries = 2
 concurrency = 30
 proxy = "http://username:password@host:port"
 enable_multiplexing = true
