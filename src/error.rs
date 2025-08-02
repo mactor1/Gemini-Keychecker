@@ -3,13 +3,13 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ValidatorError {
     #[error("HTTP error: {0}")]
-    ReqwestError(#[from] reqwest::Error),
+    ReqwestError(Box<reqwest::Error>),
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
     #[error("Configuration error: {0}")]
-    ConfigError(#[from] figment::Error),
+    ConfigError(Box<figment::Error>),
 
     #[error("TOML serialization error: {0}")]
     TomlSer(#[from] toml::ser::Error),
@@ -28,6 +28,18 @@ pub enum ValidatorError {
 
     #[error("Invalid Google API key format: {0}")]
     KeyFormatInvalid(String),
+}
+
+impl From<reqwest::Error> for ValidatorError {
+    fn from(err: reqwest::Error) -> Self {
+        ValidatorError::ReqwestError(Box::new(err))
+    }
+}
+
+impl From<figment::Error> for ValidatorError {
+    fn from(err: figment::Error) -> Self {
+        ValidatorError::ConfigError(Box::new(err))
+    }
 }
 
 pub type Result<T> = std::result::Result<T, ValidatorError>;

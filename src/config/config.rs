@@ -5,7 +5,6 @@ use figment::{
     providers::{Env, Format, Serialized, Toml},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::fmt::{self, Display};
 use std::fs;
 use std::path::PathBuf;
@@ -166,26 +165,6 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     proxy: None,
     enable_multiplexing: true,
     log_level: "info".to_string(),
-});
-
-// LazyLock for the test message body used in API key validation
-pub static TEST_MESSAGE_BODY: LazyLock<Value> = LazyLock::new(|| {
-    serde_json::json!({
-      "contents": [
-        {
-          "parts": [
-            {
-              "text": "Hi"
-            }
-          ]
-        }
-      ],
-      "generationConfig": {
-        "thinkingConfig": {
-          "thinkingBudget": 0
-        }
-      }
-    })
 });
 
 fn default_api_host() -> Url {

@@ -1,5 +1,5 @@
 use gemini_keychecker::error::ValidatorError;
-use gemini_keychecker::{BANNER, config::KeyCheckerConfig, service::start_validation};
+use gemini_keychecker::{BANNER, config::KeyCheckerConfig, validation::start_validation};
 use mimalloc::MiMalloc;
 use tracing::info;
 

@@ -5,10 +5,11 @@ use reqwest::Client;
 use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 
-use super::{http_client::client_builder, key_tester::validate_key};
+use super::key_validator::test_generate_content_api;
 use crate::adapters::{load_keys, write_keys_txt_file};
 use crate::config::KeyCheckerConfig;
 use crate::types::GeminiKey;
+use crate::utils::client_builder;
 
 pub struct ValidationService {
     config: KeyCheckerConfig,
@@ -49,7 +50,7 @@ impl ValidationService {
         // Create stream to validate keys concurrently
         let valid_keys_stream = stream
             .map(|key| {
-                validate_key(
+                test_generate_content_api(
                     self.client.clone(),
                     self.full_url.clone(),
                     key,
