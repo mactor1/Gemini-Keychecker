@@ -28,6 +28,24 @@ pub enum ValidatorError {
 
     #[error("Invalid Google API key format: {0}")]
     KeyFormatInvalid(String),
+
+    #[error("HTTP 400 Bad Request: {body}")]
+    HttpBadRequest { body: String },
+
+    #[error("HTTP 401 Unauthorized: {body}")]
+    HttpUnauthorized { body: String },
+
+    #[error("HTTP 403 Forbidden: {body}")]
+    HttpForbidden { body: String },
+
+    #[error("HTTP 429 Too Many Requests: {body}")]
+    HttpTooManyRequests { body: String },
+
+    #[error("HTTP {status} Client Error: {body}")]
+    HttpClientError { status: u16, body: String },
+
+    #[error("HTTP {status} Server Error: {body}")]
+    HttpServerError { status: u16, body: String },
 }
 
 impl From<reqwest::Error> for ValidatorError {

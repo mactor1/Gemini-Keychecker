@@ -1,4 +1,4 @@
-use reqwest::{Client, IntoUrl, StatusCode};
+use reqwest::{Client, IntoUrl};
 use tracing::{error, info, warn};
 
 use super::{CACHE_CONTENT_TEST_BODY, GENERATE_CONTENT_TEST_BODY};
@@ -28,10 +28,11 @@ pub async fn test_generate_content_api(
             info!("SUCCESS - {}... - Valid key found", &api_key.as_ref()[..10]);
             Ok(api_key)
         }
-        Err(e) => match e.status() {
-            Some(
-                StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS,
-            ) => {
+        Err(e) => match &e {
+            ValidatorError::HttpBadRequest { .. }
+            | ValidatorError::HttpUnauthorized { .. }
+            | ValidatorError::HttpForbidden { .. }
+            | ValidatorError::HttpTooManyRequests { .. } => {
                 warn!(
                     "INVALID - {}... - {}",
                     &api_key.as_ref()[..10],
@@ -40,9 +41,8 @@ pub async fn test_generate_content_api(
                 Err(ValidatorError::KeyInvalid)
             }
             _ => {
-                let req_error = ValidatorError::from(e);
-                error!("ERROR-  {}... - {}", &api_key.as_ref()[..10], req_error);
-                Err(req_error)
+                error!("ERROR-  {}... - {}", &api_key.as_ref()[..10], e);
+                Err(e)
             }
         },
     }
@@ -72,10 +72,11 @@ pub async fn test_cache_content_api(
             );
             Ok(api_key)
         }
-        Err(e) => match e.status() {
-            Some(
-                StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS,
-            ) => {
+        Err(e) => match &e {
+            ValidatorError::HttpBadRequest { .. }
+            | ValidatorError::HttpUnauthorized { .. }
+            | ValidatorError::HttpForbidden { .. }
+            | ValidatorError::HttpTooManyRequests { .. } => {
                 warn!(
                     "CACHE INVALID - {}... - {}",
                     &api_key.as_ref()[..10],
@@ -84,13 +85,8 @@ pub async fn test_cache_content_api(
                 Err(ValidatorError::KeyInvalid)
             }
             _ => {
-                let req_error = ValidatorError::from(e);
-                error!(
-                    "CACHE ERROR - {}... - {}",
-                    &api_key.as_ref()[..10],
-                    req_error
-                );
-                Err(req_error)
+                error!("CACHE ERROR - {}... - {}", &api_key.as_ref()[..10], e);
+                Err(e)
             }
         },
     }

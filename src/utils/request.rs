@@ -1,10 +1,11 @@
 use backon::{ExponentialBuilder, Retryable};
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use serde_json::Value;
 use tokio::time::Duration;
 use tracing::debug;
 use url::Url;
 
+use crate::error::ValidatorError;
 use crate::types::GeminiKey;
 
 pub async fn send_request(
@@ -13,7 +14,7 @@ pub async fn send_request(
     key: GeminiKey,
     payload: &Value,
     max_retries: usize,
-) -> Result<reqwest::Response, reqwest::Error> {
+) -> Result<(), ValidatorError> {
     let retry_policy = ExponentialBuilder::default()
         .with_max_times(max_retries)
         .with_min_delay(Duration::from_secs(1))
@@ -27,14 +28,49 @@ pub async fn send_request(
             .json(payload)
             .send()
             .await?;
-        debug!("Response for key {}: {:?}", key.as_ref(), response.status());
-        response.error_for_status()
+
+        let status = response.status();
+
+        if status.is_success() {
+            Ok(())
+        } else {
+            let body = response.text().await.map_err(ValidatorError::from)?;
+            debug!(
+                "Response for key {}: status={:?}, body={}",
+                key.as_ref(),
+                status,
+                body
+            );
+
+            let status_code = status.as_u16();
+            match status_code {
+                400 => Err(ValidatorError::HttpBadRequest { body }),
+                401 => Err(ValidatorError::HttpUnauthorized { body }),
+                403 => Err(ValidatorError::HttpForbidden { body }),
+                429 => Err(ValidatorError::HttpTooManyRequests { body }),
+                400..=499 => Err(ValidatorError::HttpClientError {
+                    status: status_code,
+                    body,
+                }),
+                500..=599 => Err(ValidatorError::HttpServerError {
+                    status: status_code,
+                    body,
+                }),
+                _ => {
+                    // For other status codes, treat as client error
+                    Err(ValidatorError::HttpClientError {
+                        status: status_code,
+                        body,
+                    })
+                }
+            }
+        }
     })
     .retry(&retry_policy)
-    .when(|e: &reqwest::Error| {
+    .when(|error: &ValidatorError| {
         !matches!(
-            e.status(),
-            Some(StatusCode::FORBIDDEN | StatusCode::UNAUTHORIZED)
+            error,
+            ValidatorError::HttpUnauthorized { .. } | ValidatorError::HttpForbidden { .. }
         )
     })
     .await

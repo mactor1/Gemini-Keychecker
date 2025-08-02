@@ -19,7 +19,6 @@ pub struct ContentPart {
     pub role: Option<String>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ThinkingConfig {
     #[serde(rename = "thinkingBudget")]
@@ -66,9 +65,9 @@ pub static GENERATE_CONTENT_TEST_BODY: LazyLock<Value> = LazyLock::new(|| {
 // LazyLock for the cached content test body used in cache API validation
 pub static CACHE_CONTENT_TEST_BODY: LazyLock<Value> = LazyLock::new(|| {
     // Generate random text content to meet the minimum 1024 tokens requirement for cache API
-    let long_text = "You are an expert at analyzing transcripts.".repeat(50);
+    let long_text = "You are an expert at analyzing transcripts.".repeat(150);
     let cache_request = GeminiRequest {
-        model: Some("models/gemini-2.5-flash-lite".to_string()),
+        model: Some("models/gemini-2.5-flash".to_string()),
         contents: vec![ContentPart {
             parts: vec![TextPart { text: long_text }],
             role: Some("user".to_string()),
