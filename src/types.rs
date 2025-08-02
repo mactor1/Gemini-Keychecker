@@ -31,3 +31,29 @@ impl FromStr for GeminiKey {
         }
     }
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum KeyTier {
+    Free,
+    Paid,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidatedKey {
+    pub key: GeminiKey,
+    pub tier: KeyTier,
+}
+
+impl ValidatedKey {
+    pub fn new(key: GeminiKey) -> Self {
+        Self {
+            key,
+            tier: KeyTier::Free,
+        }
+    }
+
+    pub fn with_paid_tier(mut self) -> Self {
+        self.tier = KeyTier::Paid;
+        self
+    }
+}

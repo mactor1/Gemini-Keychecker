@@ -18,9 +18,6 @@ struct Cli {
     #[serde(skip_serializing_if = "Option::is_none")]
     input_path: Option<PathBuf>,
 
-    #[arg(short = 'o', long)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    output_path: Option<PathBuf>,
 
     #[arg(short = 'b', long)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -53,9 +50,6 @@ pub struct KeyCheckerConfig {
     #[serde(default)]
     pub input_path: PathBuf,
 
-    // Output file path for valid API keys.
-    #[serde(default)]
-    pub output_path: PathBuf,
 
     // Backup file path for all API keys.
     #[serde(default)]
@@ -123,6 +117,13 @@ impl KeyCheckerConfig {
             .join("v1beta/models/gemini-2.5-flash-lite:generateContent")
             .expect("Failed to join API URL")
     }
+
+    /// Returns the complete Gemini API URL for cachedContents endpoint
+    pub fn cache_api_url(&self) -> Url {
+        self.api_host
+            .join("v1beta/cachedContents")
+            .expect("Failed to join cache API URL")
+    }
 }
 
 impl Display for KeyCheckerConfig {
@@ -140,14 +141,13 @@ impl Display for KeyCheckerConfig {
 
         write!(
             f,
-            "Host={}, Proxy={}, Protocol={}, Timeout={}s, Concurrency={}, Input={}, Output={}, Backup={}",
+            "Host={}, Proxy={}, Protocol={}, Timeout={}s, Concurrency={}, Input={}, Backup={}",
             self.api_host,
             proxy_status,
             protocol_status,
             self.timeout_sec,
             self.concurrency,
             self.input_path.display(),
-            self.output_path.display(),
             self.backup_path.display()
         )
     }
@@ -156,7 +156,6 @@ impl Display for KeyCheckerConfig {
 // Single LazyLock for entire default configuration
 static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerConfig {
     input_path: "keys.txt".into(),
-    output_path: "output_keys.txt".into(),
     backup_path: "backup_keys.txt".into(),
     api_host: Url::parse("https://generativelanguage.googleapis.com/").unwrap(),
     timeout_sec: 15,

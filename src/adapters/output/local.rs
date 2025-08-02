@@ -1,16 +1,24 @@
-use crate::types::GeminiKey;
+use crate::types::{GeminiKey, ValidatedKey, KeyTier};
 use crate::error::Result;
 use std::{fs, io::Write};
 use tokio::io::{AsyncWriteExt, BufWriter};
 use toml::Value;
 use tracing::info;
 
-// Write valid key to output file
-pub async fn write_keys_txt_file(
-    file: &mut BufWriter<tokio::fs::File>,
-    key: &GeminiKey,
+// Write valid key to appropriate tier file
+pub async fn write_validated_key_to_tier_files(
+    free_file: &mut BufWriter<tokio::fs::File>,
+    paid_file: &mut BufWriter<tokio::fs::File>,
+    validated_key: &ValidatedKey,
 ) -> Result<()> {
-    file.write_all(format!("{}\n", key.as_ref()).as_bytes()).await?;
+    match validated_key.tier {
+        KeyTier::Free => {
+            free_file.write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes()).await?;
+        }
+        KeyTier::Paid => {
+            paid_file.write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes()).await?;
+        }
+    }
     Ok(())
 }
 

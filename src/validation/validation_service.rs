@@ -1,15 +1,15 @@
+use super::key_validator::{test_cache_content_api, test_generate_content_api};
+use crate::adapters::{load_keys, write_validated_key_to_tier_files};
+use crate::config::KeyCheckerConfig;
 use crate::error::ValidatorError;
+use crate::types::GeminiKey;
+use crate::utils::client_builder;
 use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use reqwest::Client;
 use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
-
-use super::key_validator::test_generate_content_api;
-use crate::adapters::{load_keys, write_keys_txt_file};
-use crate::config::KeyCheckerConfig;
-use crate::types::GeminiKey;
-use crate::utils::client_builder;
+use tracing::error;
 
 pub struct ValidationService {
     config: KeyCheckerConfig,
@@ -47,7 +47,8 @@ impl ValidationService {
             }
         });
 
-        // Create stream to validate keys concurrently
+        // Create stream to validate keys concurrently (two-stage pipeline)
+        let cache_api_url = self.config.cache_api_url();
         let valid_keys_stream = stream
             .map(|key| {
                 test_generate_content_api(
@@ -58,22 +59,44 @@ impl ValidationService {
                 )
             })
             .buffer_unordered(self.config.concurrency)
-            .filter_map(|result| async { result.ok() });
+            .filter_map(|result| async { result.ok() })
+            .map(|validated_key| {
+                test_cache_content_api(
+                    self.client.clone(),
+                    cache_api_url.clone(),
+                    validated_key,
+                    self.config.clone(),
+                )
+            })
+            .buffer_unordered(self.config.concurrency);
         pin_mut!(valid_keys_stream);
 
-        // Open output file for writing valid keys
-        let output_file = fs::File::create(&self.config.output_path).await?;
-        let mut buffer_writer = tokio::io::BufWriter::new(output_file);
+        // Open output files for writing keys by tier (fixed filenames)
+        let free_keys_path = "freekey.txt";
+        let paid_keys_path = "paidkey.txt";
 
-        // Process validated keys and write to output file
+        let free_file = fs::File::create(&free_keys_path).await?;
+        let paid_file = fs::File::create(&paid_keys_path).await?;
+
+        let mut free_buffer_writer = tokio::io::BufWriter::new(free_file);
+        let mut paid_buffer_writer = tokio::io::BufWriter::new(paid_file);
+
+        // Process validated keys and write to appropriate tier files
         while let Some(valid_key) = valid_keys_stream.next().await {
-            if let Err(e) = write_keys_txt_file(&mut buffer_writer, &valid_key).await {
-                eprintln!("Failed to write key to output file: {}", e);
+            if let Err(e) = write_validated_key_to_tier_files(
+                &mut free_buffer_writer,
+                &mut paid_buffer_writer,
+                &valid_key,
+            )
+            .await
+            {
+                error!("Failed to write key to output file: {e}");
             }
         }
 
-        // Flush the buffer to ensure all data is written to the file
-        buffer_writer.flush().await?;
+        // Flush both buffers to ensure all data is written to files
+        free_buffer_writer.flush().await?;
+        paid_buffer_writer.flush().await?;
 
         println!("Total Elapsed Time: {:?}", start_time.elapsed());
         Ok(())
