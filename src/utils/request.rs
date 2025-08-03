@@ -1,6 +1,6 @@
 use backon::{ExponentialBuilder, Retryable};
 use reqwest::Client;
-use serde_json::Value;
+use serde::Serialize;
 use tokio::time::Duration;
 use tracing::debug;
 use url::Url;
@@ -8,13 +8,16 @@ use url::Url;
 use crate::error::ValidatorError;
 use crate::types::GeminiKey;
 
-pub async fn send_request(
+pub async fn send_request<T>(
     client: Client,
     api_endpoint: &Url,
     key: GeminiKey,
-    payload: &Value,
+    payload: &T,
     max_retries: usize,
-) -> Result<(), ValidatorError> {
+) -> Result<(), ValidatorError>
+where
+    T: Serialize,
+{
     let retry_policy = ExponentialBuilder::default()
         .with_max_times(max_retries)
         .with_min_delay(Duration::from_secs(1))

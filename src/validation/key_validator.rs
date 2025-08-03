@@ -19,13 +19,16 @@ pub async fn test_generate_content_api(
         client,
         &api_endpoint,
         api_key.clone(),
-        &GENERATE_CONTENT_TEST_BODY,
+        &*GENERATE_CONTENT_TEST_BODY,
         config.max_retries,
     )
     .await
     {
         Ok(_) => {
-            info!("BASIC API VALID - {}... - Passed generate content API test", &api_key.as_ref()[..10]);
+            info!(
+                "BASIC API VALID - {}... - Passed generate content API test",
+                &api_key.as_ref()[..10]
+            );
             Ok(ValidatedKey::new(api_key))
         }
         Err(e) => match &e {
@@ -60,7 +63,7 @@ pub async fn test_cache_content_api(
         client,
         &api_endpoint,
         validated_key.key.clone(),
-        &CACHE_CONTENT_TEST_BODY,
+        &*CACHE_CONTENT_TEST_BODY,
         config.max_retries,
     )
     .await
@@ -88,7 +91,6 @@ pub async fn test_cache_content_api(
                 );
                 validated_key
             }
-        }
+        },
     }
 }
-
