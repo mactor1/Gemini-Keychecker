@@ -50,16 +50,11 @@ jobs:
     - name: Build project
       run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Prepare release artifact
-      run: |
-        mkdir -p release-package
-        cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} release-package/${{ matrix.release_name }}
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.release_name }}
-        path: release-package/${{ matrix.release_name }}
+        path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
         retention-days: 1
 
   release:
