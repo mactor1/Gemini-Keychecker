@@ -48,16 +48,9 @@ jobs:
       - name: Build project
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Create release package and zip
-        run: |
-          mkdir -p release-package
-          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} release-package/
-          cd release-package
-          zip -r ../${{ matrix.release_name }}.zip .
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}.zip
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
           retention-days: 30
