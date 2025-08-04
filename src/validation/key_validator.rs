@@ -55,7 +55,6 @@ pub async fn test_cache_content_api(
     client: Client,
     api_endpoint: impl IntoUrl,
     validated_key: ValidatedKey,
-    config: KeyCheckerConfig,
 ) -> ValidatedKey {
     let api_endpoint = api_endpoint.into_url().unwrap();
 
@@ -64,7 +63,7 @@ pub async fn test_cache_content_api(
         &api_endpoint,
         validated_key.key.clone(),
         &*CACHE_CONTENT_TEST_BODY,
-        config.max_retries,
+        1,
     )
     .await
     {
@@ -78,7 +77,7 @@ pub async fn test_cache_content_api(
         Err(e) => match &e {
             ValidatorError::HttpTooManyRequests { .. } => {
                 debug!(
-                    "FREE KEY DETECTED - {}... - Cache API not accessible",
+                    "FREE KEY DETECTED - {}... - Rate limit exceeded for cache API",
                     &validated_key.key.as_ref()[..10]
                 );
                 validated_key

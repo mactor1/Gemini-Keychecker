@@ -61,12 +61,7 @@ impl ValidationService {
             .buffer_unordered(self.config.concurrency)
             .filter_map(|result| async { result.ok() })
             .map(|validated_key| {
-                test_cache_content_api(
-                    self.client.clone(),
-                    cache_api_url.clone(),
-                    validated_key,
-                    self.config.clone(),
-                )
+                test_cache_content_api(self.client.clone(), cache_api_url.clone(), validated_key)
             })
             .buffer_unordered(self.config.concurrency);
         pin_mut!(valid_keys_stream);
