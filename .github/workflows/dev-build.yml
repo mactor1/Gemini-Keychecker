@@ -23,7 +23,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: gemini-keychecker.exe
-            release_name: gemini-keychecker-windows-x86_64.exe
+            release_name: gemini-keychecker-windows-x86_64
 
     steps:
       - name: Checkout code
