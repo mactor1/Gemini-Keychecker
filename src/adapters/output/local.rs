@@ -1,5 +1,5 @@
-use crate::types::{GeminiKey, ValidatedKey, KeyTier};
-use crate::error::Result;
+use crate::error::ValidatorError;
+use crate::types::{GeminiKey, KeyTier, ValidatedKey};
 use std::{fs, io::Write};
 use tokio::io::{AsyncWriteExt, BufWriter};
 use toml::Value;
@@ -10,20 +10,27 @@ pub async fn write_validated_key_to_tier_files(
     free_file: &mut BufWriter<tokio::fs::File>,
     paid_file: &mut BufWriter<tokio::fs::File>,
     validated_key: &ValidatedKey,
-) -> Result<()> {
+) -> Result<(), ValidatorError> {
     match validated_key.tier {
         KeyTier::Free => {
-            free_file.write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes()).await?;
+            free_file
+                .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
+                .await?;
         }
         KeyTier::Paid => {
-            paid_file.write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes()).await?;
+            paid_file
+                .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
+                .await?;
         }
     }
     Ok(())
 }
 
 // Write valid key to output file in Clewdr format
-pub fn write_keys_clewdr_format(file: &mut fs::File, key: &GeminiKey) -> Result<()> {
+pub fn write_keys_clewdr_format(
+    file: &mut fs::File,
+    key: &GeminiKey,
+) -> Result<(), ValidatorError> {
     let mut table = toml::value::Table::new();
     table.insert("key".to_string(), Value::String(key.as_ref().to_string()));
 
@@ -37,7 +44,7 @@ pub fn write_keys_clewdr_format(file: &mut fs::File, key: &GeminiKey) -> Result<
 }
 
 // Write keys to a text file with custom filename
-pub fn write_keys_to_file(keys: &[String], filename: &str) -> Result<()> {
+pub fn write_keys_to_file(keys: &[String], filename: &str) -> Result<(), ValidatorError> {
     let content = keys.join("\n");
     fs::write(filename, content)?;
     info!("File '{}' created with {} keys", filename, keys.len());

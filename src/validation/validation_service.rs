@@ -1,5 +1,5 @@
 use super::key_validator::{test_cache_content_api, test_generate_content_api};
-use crate::adapters::{load_keys, write_validated_key_to_tier_files};
+use crate::adapters::{load_keys_from_txt, write_validated_key_to_tier_files};
 use crate::config::KeyCheckerConfig;
 use crate::error::ValidatorError;
 use crate::types::GeminiKey;
@@ -102,7 +102,7 @@ pub async fn start_validation() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;
 
     // 加载密钥
-    let keys = load_keys(config.input_path.as_path())?;
+    let keys = load_keys_from_txt(config.input_path.as_path())?;
 
     // 构建HTTP客户端
     let client = client_builder(&config)?;

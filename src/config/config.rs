@@ -18,7 +18,6 @@ struct Cli {
     #[serde(skip_serializing_if = "Option::is_none")]
     input_path: Option<PathBuf>,
 
-
     #[arg(short = 'b', long)]
     #[serde(skip_serializing_if = "Option::is_none")]
     backup_path: Option<PathBuf>,
@@ -49,7 +48,6 @@ pub struct KeyCheckerConfig {
     // Input file path containing API keys to check.
     #[serde(default)]
     pub input_path: PathBuf,
-
 
     // Backup file path for all API keys.
     #[serde(default)]

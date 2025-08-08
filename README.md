@@ -14,7 +14,7 @@ A high-performance tool to validate Google Gemini API keys with batch processing
 
 ### Download Pre-built Binaries
 
-Download the latest release from [GitHub Releases](https://github.com/your-username/Gemini-Keychecker/releases):
+Download the latest release from [GitHub Releases](https://github.com/Yoo1tic/Gemini-Keychecker/releases):
 
 - **Linux**: `gemini-keychecker-linux-x86_64`
 - **Windows**: `gemini-keychecker-windows-x86_64.exe`
@@ -22,7 +22,7 @@ Download the latest release from [GitHub Releases](https://github.com/your-usern
 ### Build from Source
 
 ```bash
-git clone https://github.com/your-username/Gemini-Keychecker.git
+git clone https://github.com/Yoo1tic/Gemini-Keychecker.git
 cd Gemini-Keychecker
 cargo build --release
 ```
@@ -39,6 +39,7 @@ cargo build --release
 ```
 
 The tool will:
+
 - Validate all API keys and create output files for valid keys
 - Generate a backup file (`backup_keys.txt`) containing all processed keys
 
@@ -52,7 +53,6 @@ The tool supports three configuration methods (in order of precedence):
 ### Configuration File
 
 Create a `Config.toml` file in the same directory. See `Config.toml.example` for reference.
-
 
 ### Command Line Options
 
@@ -68,10 +68,10 @@ Options:
   -h, --help                        Print help
 ```
 
-
 ### Examples
 
 #### Basic Usage
+
 ```bash
 # Use default settings
 ./gemini-keychecker
@@ -84,6 +84,7 @@ Options:
 ```
 
 #### Performance Tuning
+
 ```bash
 # High concurrency for fast validation
 ./gemini-keychecker -c 100 -t 10
@@ -93,6 +94,7 @@ Options:
 ```
 
 #### Proxy Configuration
+
 ```bash
 # HTTP proxy without authentication
 ./gemini-keychecker -x http://proxy.company.com:8080
