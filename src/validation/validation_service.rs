@@ -101,13 +101,10 @@ impl ValidationService {
 pub async fn start_validation() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;
 
-    // 加载密钥
     let keys = load_keys_from_txt(config.input_path.as_path())?;
 
-    // 构建HTTP客户端
     let client = client_builder(&config)?;
 
-    // 创建验证服务并启动
     let validation_service = ValidationService::new(config, client);
     validation_service.validate_keys(keys).await
 }

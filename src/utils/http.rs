@@ -1,12 +1,31 @@
+use crate::types::GeminiKey;
+use crate::{config::KeyCheckerConfig, error::ValidatorError};
 use backon::{ExponentialBuilder, Retryable};
 use reqwest::Client;
 use serde::Serialize;
-use tokio::time::Duration;
+use std::time::Duration;
+use tokio::time::Duration as TokioDuration;
 use tracing::debug;
 use url::Url;
 
-use crate::error::ValidatorError;
-use crate::types::GeminiKey;
+pub fn client_builder(config: &KeyCheckerConfig) -> Result<Client, ValidatorError> {
+    // Set the maximum number of connections per host based on concurrency.
+    let pool_size = config.concurrency / 2;
+
+    let mut builder = Client::builder()
+        .timeout(Duration::from_secs(config.timeout_sec))
+        .pool_max_idle_per_host(pool_size);
+
+    if let Some(ref proxy_url) = config.proxy {
+        builder = builder.proxy(reqwest::Proxy::all(proxy_url.clone())?);
+    }
+
+    if !config.enable_multiplexing {
+        builder = builder.http1_only();
+    }
+
+    Ok(builder.build()?)
+}
 
 pub async fn send_request<T>(
     client: Client,
@@ -20,8 +39,8 @@ where
 {
     let retry_policy = ExponentialBuilder::default()
         .with_max_times(max_retries)
-        .with_min_delay(Duration::from_secs(1))
-        .with_max_delay(Duration::from_secs(2));
+        .with_min_delay(TokioDuration::from_secs(1))
+        .with_max_delay(TokioDuration::from_secs(2));
 
     (async || {
         let response = client
