@@ -29,26 +29,17 @@ jobs:
             artifact_name: gemini-keychecker
             release_name: gemini-keychecker-linux-aarch64
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target_triple }}
+      - name: Add Rust target
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup target add ${{ matrix.target_triple }}
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Build project
+      - name: Build for ${{ matrix.target }}
         run: cargo build --release --target ${{ matrix.target_triple }}
 
       - name: Create release package
@@ -77,26 +68,11 @@ jobs:
             artifact_name: gemini-keychecker.exe
             release_name: gemini-keychecker-windows-x86_64
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target_triple }}
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Build project
+      - name: Build for ${{ matrix.target }}
         run: cargo build --release --target ${{ matrix.target_triple }}
 
       - name: Create release package
@@ -127,26 +103,14 @@ jobs:
             artifact_name: gemini-keychecker
             release_name: gemini-keychecker-macos-aarch64
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target_triple }}
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target_triple }}
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Build project
+      - name: Build for ${{ matrix.target }}
         run: cargo build --release --target ${{ matrix.target_triple }}
 
       - name: Create release package
