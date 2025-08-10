@@ -3,7 +3,7 @@ use gemini_keychecker::{BANNER, config::KeyCheckerConfig, validation::start_vali
 use mimalloc::MiMalloc;
 use tracing::info;
 use tracing_indicatif::IndicatifLayer;
-use tracing_subscriber::Layer;
+use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -16,19 +16,12 @@ async fn main() -> Result<(), ValidatorError> {
     let config = KeyCheckerConfig::load_config()?;
 
     let indicatif_layer = IndicatifLayer::new();
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&config.log_level));
 
     tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_target(false)
-                .with_level(true)
-                .with_writer(indicatif_layer.get_stderr_writer())
-                .with_ansi(false)
-                .with_filter(
-                    tracing_subscriber::EnvFilter::try_from_default_env()
-                        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&config.log_level)),
-                ),
-        )
+        .with(env_filter)
+        .with(tracing_subscriber::fmt::layer().with_writer(indicatif_layer.get_stderr_writer()))
         .with(indicatif_layer)
         .init();
 

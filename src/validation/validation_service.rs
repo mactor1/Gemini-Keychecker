@@ -49,10 +49,10 @@ impl ValidationService {
             }
         });
         // Create a progress bar to track validation progress
-        let progress_span = info_span!("progress_bar");
+        let progress_span = info_span!("key_checker");
         progress_span.pb_set_style(
             &ProgressStyle::with_template(
-                "[{bar:60.cyan/blue}] {pos}/{len} ({percent}%) [{elapsed_precise}] ETA:{eta}",
+                "[{bar:60.cyan/blue}] {pos}/{len} ({percent}%) [{elapsed_precise}] ETA:{eta} Speed:{per_sec}",
             )
             .unwrap(),
         );
