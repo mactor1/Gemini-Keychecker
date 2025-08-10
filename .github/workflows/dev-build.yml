@@ -29,13 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          target: ${{ matrix.target_triple }}
-          override: true
+      - name: Add Rust target
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup target add ${{ matrix.target_triple }}
 
       - uses: Swatinem/rust-cache@v2
 
@@ -65,14 +63,6 @@ jobs:
             release_name: gemini-keychecker-windows-x86_64
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          target: ${{ matrix.target_triple }}
-          override: true
 
       - uses: Swatinem/rust-cache@v2
 
@@ -108,13 +98,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          target: ${{ matrix.target_triple }}
-          override: true
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target_triple }}
 
       - uses: Swatinem/rust-cache@v2
 
