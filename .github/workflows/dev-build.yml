@@ -49,19 +49,15 @@ jobs:
       - name: Build project
         run: cargo build --release --target ${{ matrix.target_triple }}
 
-      - name: Create release package
+      - name: Package artifact
         run: |
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} .
-          mkdir -p release-package
-          mv ${{ matrix.artifact_name }} release-package/
-          cd release-package
-          zip -r ../${{ matrix.release_name }}.zip .
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
 
-      - name: Upload zipped artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}.zip
+          path: ${{ matrix.release_name }}
           retention-days: 30
 
   build-windows:
@@ -97,17 +93,16 @@ jobs:
       - name: Build project
         run: cargo build --release --target ${{ matrix.target_triple }}
 
-      - name: Create release package
+      - name: Package artifact
         run: |
           mkdir -p release-package
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} release-package/
-          Compress-Archive -Path 'release-package\*' -DestinationPath "${{ matrix.release_name }}.zip" -CompressionLevel Optimal -Force
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
 
-      - name: Upload zipped artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}.zip
+          path: ${{ matrix.release_name }}
           retention-days: 30
 
   build-macos:
@@ -147,17 +142,13 @@ jobs:
       - name: Build project
         run: cargo build --release --target ${{ matrix.target_triple }}
 
-      - name: Create release package
+      - name: Package artifact
         run: |
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} .
-          mkdir -p release-package
-          mv ${{ matrix.artifact_name }} release-package/
-          cd release-package
-          zip -r ../${{ matrix.release_name }}.zip .
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
 
-      - name: Upload zipped artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}.zip
+          path: ${{ matrix.release_name }}
           retention-days: 30

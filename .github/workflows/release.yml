@@ -51,14 +51,15 @@ jobs:
       - name: Build project
         run: cargo build --release --target ${{ matrix.target_triple }}
 
-      - name: Create release package and zip
+      - name: Create release package
         run: |
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} .
           mkdir -p release-package
-          cp target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} release-package/
+          mv ${{ matrix.artifact_name }} release-package/
           cd release-package
           zip -r ../${{ matrix.release_name }}.zip .
 
-      - name: Upload artifact
+      - name: Upload zipped artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
@@ -68,6 +69,13 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64
+            target_triple: x86_64-pc-windows-msvc
+            artifact_name: gemini-keychecker.exe
+            release_name: gemini-keychecker-windows-x86_64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,7 +83,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target_triple }}
 
       - name: Cache cargo dependencies
         uses: actions/cache@v4
@@ -89,20 +97,71 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Build project
-        run: cargo build --release --target x86_64-pc-windows-msvc
+        run: cargo build --release --target ${{ matrix.target_triple }}
 
-      - name: Create release package and zip
+      - name: Create release package
         run: |
           mkdir -p release-package
-          cp target/x86_64-pc-windows-msvc/release/gemini-keychecker.exe release-package/
-          cd release-package
-          Compress-Archive -Path * -DestinationPath ../gemini-keychecker-windows-x86_64.zip
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} release-package/
+          Compress-Archive -Path 'release-package\*' -DestinationPath "${{ matrix.release_name }}.zip" -CompressionLevel Optimal -Force
 
-      - name: Upload artifact
+      - name: Upload zipped artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gemini-keychecker-windows-x86_64
-          path: gemini-keychecker-windows-x86_64.zip
+          name: ${{ matrix.release_name }}
+          path: ${{ matrix.release_name }}.zip
+          retention-days: 1
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64
+            target_triple: x86_64-apple-darwin
+            artifact_name: gemini-keychecker
+            release_name: gemini-keychecker-macos-x86_64
+          - target: aarch64
+            target_triple: aarch64-apple-darwin
+            artifact_name: gemini-keychecker
+            release_name: gemini-keychecker-macos-aarch64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target_triple }}
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build project
+        run: cargo build --release --target ${{ matrix.target_triple }}
+
+      - name: Create release package
+        run: |
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} .
+          mkdir -p release-package
+          mv ${{ matrix.artifact_name }} release-package/
+          cd release-package
+          zip -r ../${{ matrix.release_name }}.zip .
+
+      - name: Upload zipped artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.release_name }}
+          path: ${{ matrix.release_name }}.zip
           retention-days: 1
 
   release:
