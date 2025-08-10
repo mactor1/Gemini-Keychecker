@@ -73,6 +73,6 @@ pub static CACHE_CONTENT_TEST_BODY: LazyLock<GeminiRequest> = LazyLock::new(|| {
             role: Some("user".to_string()),
         }],
         generation_config: None,
-        ttl: Some("300s".to_string()),
+        ttl: Some("30s".to_string()),
     }
 });
