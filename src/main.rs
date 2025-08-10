@@ -21,7 +21,12 @@ async fn main() -> Result<(), ValidatorError> {
 
     tracing_subscriber::registry()
         .with(env_filter)
-        .with(tracing_subscriber::fmt::layer().with_writer(indicatif_layer.get_stderr_writer()))
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_writer(indicatif_layer.get_stderr_writer())
+                .with_level(true)
+                .with_target(false),
+        )
         .with(indicatif_layer)
         .init();
 

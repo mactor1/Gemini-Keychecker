@@ -8,7 +8,6 @@ use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
 use indicatif::ProgressStyle;
 use reqwest::Client;
-use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
 use tracing::{Span, error, info_span};
 use tracing_indicatif::span_ext::IndicatifSpanExt;
@@ -30,7 +29,6 @@ impl ValidationService {
     }
 
     pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<(), ValidatorError> {
-        let start_time = Instant::now();
         let total_keys = keys.len();
         // Create channel for streaming keys from producer to consumer
         let (tx, mut rx) = mpsc::unbounded_channel::<GeminiKey>();
@@ -113,7 +111,6 @@ impl ValidationService {
         std::mem::drop(progress_span_enter);
         std::mem::drop(progress_span);
 
-        println!("Total Elapsed Time: {:?}", start_time.elapsed());
         Ok(())
     }
 }

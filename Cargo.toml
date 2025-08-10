@@ -21,9 +21,9 @@ url = { version = "2.5", features = ["serde"] }
 async-stream = "0.3"
 figment = { version = "0.10", features = ["env", "toml"] }
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.9.5"
+toml = "0.9"
 thiserror = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
-tracing-indicatif = "0.3.12"
-indicatif = "0.18.0"
+tracing-indicatif = "0.3"
+indicatif = "0.18"
