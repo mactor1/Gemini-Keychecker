@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
+  linux:
     name: Build Linux
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -60,7 +60,7 @@ jobs:
           path: ${{ matrix.release_name }}
           retention-days: 30
 
-  build-windows:
+  windows:
     name: Build Windows
     runs-on: windows-latest
     strategy:
@@ -105,7 +105,7 @@ jobs:
           path: ${{ matrix.release_name }}
           retention-days: 30
 
-  build-macos:
+  macos:
     name: Build macOS
     runs-on: macos-latest
     strategy:

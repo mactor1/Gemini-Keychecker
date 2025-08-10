@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  build-linux:
+  linux:
     name: Build Linux
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -66,7 +66,7 @@ jobs:
           path: ${{ matrix.release_name }}.zip
           retention-days: 1
 
-  build-windows:
+  windows:
     name: Build Windows
     runs-on: windows-latest
     strategy:
@@ -112,7 +112,7 @@ jobs:
           path: ${{ matrix.release_name }}.zip
           retention-days: 1
 
-  build-macos:
+  macos:
     name: Build macOS
     runs-on: macos-latest
     strategy:
@@ -166,7 +166,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [build-linux, build-windows]
+    needs: [linux, windows, macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
