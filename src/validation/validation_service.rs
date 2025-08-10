@@ -6,10 +6,12 @@ use crate::types::GeminiKey;
 use crate::utils::client_builder;
 use async_stream::stream;
 use futures::{pin_mut, stream::StreamExt};
+use indicatif::ProgressStyle;
 use reqwest::Client;
 use std::time::Instant;
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc};
-use tracing::error;
+use tracing::{Span, error, info_span};
+use tracing_indicatif::span_ext::IndicatifSpanExt;
 
 pub struct ValidationService {
     config: KeyCheckerConfig,
@@ -29,7 +31,7 @@ impl ValidationService {
 
     pub async fn validate_keys(&self, keys: Vec<GeminiKey>) -> Result<(), ValidatorError> {
         let start_time = Instant::now();
-
+        let total_keys = keys.len();
         // Create channel for streaming keys from producer to consumer
         let (tx, mut rx) = mpsc::unbounded_channel::<GeminiKey>();
         let stream = stream! {
@@ -46,17 +48,32 @@ impl ValidationService {
                 }
             }
         });
+        // Create a progress bar to track validation progress
+        let progress_span = info_span!("progress_bar");
+        progress_span.pb_set_style(
+            &ProgressStyle::with_template(
+                "[{bar:60.cyan/blue}] {pos}/{len} ({percent}%) [{elapsed_precise}] ETA:{eta}",
+            )
+            .unwrap(),
+        );
+        progress_span.pb_set_length(total_keys as u64);
+        progress_span.pb_set_message("Validating keys...");
+        progress_span.pb_set_finish_message("All items processed");
+        let progress_span_enter = progress_span.enter();
 
         // Create stream to validate keys concurrently (two-stage pipeline)
         let cache_api_url = self.config.cache_api_url();
         let valid_keys_stream = stream
-            .map(|key| {
-                test_generate_content_api(
+            .map(|key| async move {
+                let result = test_generate_content_api(
                     self.client.clone(),
                     self.full_url.clone(),
                     key,
                     self.config.clone(),
                 )
+                .await;
+                Span::current().pb_inc(1);
+                result
             })
             .buffer_unordered(self.config.concurrency)
             .filter_map(|result| async { result.ok() })
@@ -92,6 +109,9 @@ impl ValidationService {
         // Flush both buffers to ensure all data is written to files
         free_buffer_writer.flush().await?;
         paid_buffer_writer.flush().await?;
+
+        std::mem::drop(progress_span_enter);
+        std::mem::drop(progress_span);
 
         println!("Total Elapsed Time: {:?}", start_time.elapsed());
         Ok(())
