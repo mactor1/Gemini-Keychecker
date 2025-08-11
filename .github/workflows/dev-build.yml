@@ -42,13 +42,13 @@ jobs:
 
       - name: Package artifact
         run: |
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.artifact_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}
+          path: ${{ matrix.artifact_name }}
           retention-days: 30
 
   windows:
@@ -71,14 +71,13 @@ jobs:
 
       - name: Package artifact
         run: |
-          mkdir -p release-package
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.artifact_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}
+          path: ${{ matrix.artifact_name }}
           retention-days: 30
 
   macos:
@@ -108,11 +107,11 @@ jobs:
 
       - name: Package artifact
         run: |
-          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.release_name }}
+          mv target/${{ matrix.target_triple }}/release/${{ matrix.artifact_name }} ${{ matrix.artifact_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release_name }}
-          path: ${{ matrix.release_name }}
+          path: ${{ matrix.artifact_name }}
           retention-days: 30

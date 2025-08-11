@@ -67,9 +67,9 @@ pub static CACHE_CONTENT_TEST_BODY: LazyLock<GeminiRequest> = LazyLock::new(|| {
     // Generate random text content to meet the minimum 2048 tokens requirement for cache API
     // models/gemini-2.5-flash need 1024 tokens
     // models/gemini-2.5-flash-lite need 2048 tokens
-    let long_text = "You are an expert at analyzing transcripts.".repeat(260);
+    let long_text = "You are an expert at analyzing transcripts.".repeat(128);
     GeminiRequest {
-        model: Some("models/gemini-2.5-flash-lite".to_string()),
+        model: Some("models/gemini-2.5-flash".to_string()),
         contents: vec![ContentPart {
             parts: vec![TextPart { text: long_text }],
             role: Some("user".to_string()),
