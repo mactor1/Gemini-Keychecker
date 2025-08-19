@@ -6,9 +6,9 @@ use toml::Value;
 use tracing::info;
 
 // Write valid key to appropriate tier file
-pub async fn write_validated_key_to_tier_files<W>(
-    free_file: &mut W,
-    paid_file: &mut W,
+pub async fn write_validated_key_to_tier_writers<W>(
+    free_writer: &mut W,
+    paid_writer: &mut W,
     validated_key: &ValidatedKey,
 ) -> Result<(), ValidatorError>
 where
@@ -16,12 +16,12 @@ where
 {
     match validated_key.tier {
         KeyTier::Free => {
-            free_file
+            free_writer
                 .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
                 .await?;
         }
         KeyTier::Paid => {
-            paid_file
+            paid_writer
                 .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
                 .await?;
         }

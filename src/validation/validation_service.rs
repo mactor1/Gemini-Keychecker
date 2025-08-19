@@ -1,5 +1,5 @@
 use super::key_validator::{test_cache_content_api, test_generate_content_api};
-use crate::adapters::{load_keys_from_txt, write_validated_key_to_tier_files};
+use crate::adapters::{load_keys_from_txt, write_validated_key_to_tier_writers};
 use crate::config::KeyCheckerConfig;
 use crate::error::ValidatorError;
 use crate::types::GeminiKey;
@@ -93,7 +93,7 @@ impl ValidationService {
 
         // Process validated keys and write to appropriate tier files
         while let Some(valid_key) = valid_keys_stream.next().await {
-            if let Err(e) = write_validated_key_to_tier_files(
+            if let Err(e) = write_validated_key_to_tier_writers(
                 &mut free_buffer_writer,
                 &mut paid_buffer_writer,
                 &valid_key,
