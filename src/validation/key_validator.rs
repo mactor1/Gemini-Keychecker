@@ -12,7 +12,7 @@ pub async fn test_generate_content_api(
     api_endpoint: impl IntoUrl,
     api_key: GeminiKey,
     config: KeyCheckerConfig,
-) -> Result<ValidatedKey, ValidatorError> {
+) -> Result<(), ValidatorError> {
     let api_endpoint = api_endpoint.into_url().unwrap();
 
     match send_request(
@@ -29,7 +29,7 @@ pub async fn test_generate_content_api(
                 "BASIC API VALID - {}... - Passed generate content API test",
                 &api_key.as_ref()[..10]
             );
-            Ok(ValidatedKey::new(api_key))
+            Ok(())
         }
         Err(e) => match &e {
             ValidatorError::HttpBadRequest { .. }

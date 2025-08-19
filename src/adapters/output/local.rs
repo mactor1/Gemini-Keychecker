@@ -1,33 +1,8 @@
 use crate::error::ValidatorError;
-use crate::types::{GeminiKey, KeyTier, ValidatedKey};
+use crate::types::GeminiKey;
 use std::{fs, io::Write};
-use tokio::io::{AsyncWrite, AsyncWriteExt};
 use toml::Value;
 use tracing::info;
-
-// Write valid key to appropriate tier file
-pub async fn write_validated_key_to_tier_writers<W>(
-    free_writer: &mut W,
-    paid_writer: &mut W,
-    validated_key: &ValidatedKey,
-) -> Result<(), ValidatorError>
-where
-    W: AsyncWrite + Unpin,
-{
-    match validated_key.tier {
-        KeyTier::Free => {
-            free_writer
-                .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
-                .await?;
-        }
-        KeyTier::Paid => {
-            paid_writer
-                .write_all(format!("{}\n", validated_key.key.as_ref()).as_bytes())
-                .await?;
-        }
-    }
-    Ok(())
-}
 
 // Write valid key to output file in Clewdr format
 pub fn write_keys_clewdr_format(
