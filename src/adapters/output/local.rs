@@ -6,11 +6,14 @@ use toml::Value;
 use tracing::info;
 
 // Write valid key to appropriate tier file
-pub async fn write_validated_key_to_tier_files(
-    free_file: &mut (impl AsyncWrite + Unpin),
-    paid_file: &mut (impl AsyncWrite + Unpin),
+pub async fn write_validated_key_to_tier_files<W>(
+    free_file: &mut W,
+    paid_file: &mut W,
     validated_key: &ValidatedKey,
-) -> Result<(), ValidatorError> {
+) -> Result<(), ValidatorError>
+where
+    W: AsyncWrite + Unpin,
+{
     match validated_key.tier {
         KeyTier::Free => {
             free_file
