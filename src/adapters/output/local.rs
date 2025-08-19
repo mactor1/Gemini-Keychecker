@@ -1,14 +1,14 @@
 use crate::error::ValidatorError;
 use crate::types::{GeminiKey, KeyTier, ValidatedKey};
 use std::{fs, io::Write};
-use tokio::io::{AsyncWriteExt, BufWriter};
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 use toml::Value;
 use tracing::info;
 
 // Write valid key to appropriate tier file
 pub async fn write_validated_key_to_tier_files(
-    free_file: &mut BufWriter<tokio::fs::File>,
-    paid_file: &mut BufWriter<tokio::fs::File>,
+    free_file: &mut (impl AsyncWrite + Unpin),
+    paid_file: &mut (impl AsyncWrite + Unpin),
     validated_key: &ValidatedKey,
 ) -> Result<(), ValidatorError> {
     match validated_key.tier {
