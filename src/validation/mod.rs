@@ -69,7 +69,7 @@ pub static CACHE_CONTENT_TEST_BODY: LazyLock<GeminiRequest> = LazyLock::new(|| {
     // models/gemini-2.5-flash-lite need 2048 tokens
     let long_text = "You are an expert at analyzing transcripts.".repeat(128);
     GeminiRequest {
-        model: Some("models/gemini-2.5-flash".to_string()),
+        model: Some("models/gemini-2.5-pro".to_string()),
         contents: vec![ContentPart {
             parts: vec![TextPart { text: long_text }],
             role: Some("user".to_string()),

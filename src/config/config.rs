@@ -112,7 +112,7 @@ impl KeyCheckerConfig {
     /// Returns the complete Gemini API URL for generateContent endpoint
     pub fn gemini_api_url(&self) -> Url {
         self.api_host
-            .join("v1beta/models/gemini-2.5-flash-lite:generateContent")
+            .join("v1beta/models/gemini-2.5-pro:generateContent")
             .expect("Failed to join API URL")
     }
 
@@ -156,9 +156,9 @@ static DEFAULT_CONFIG: LazyLock<KeyCheckerConfig> = LazyLock::new(|| KeyCheckerC
     input_path: "keys.txt".into(),
     backup_path: "backup_keys.txt".into(),
     api_host: Url::parse("https://generativelanguage.googleapis.com/").unwrap(),
-    timeout_sec: 15,
+    timeout_sec: 30,
     concurrency: 50,
-    max_retries: 2,
+    max_retries: 3,
     proxy: None,
     enable_multiplexing: true,
     log_level: "info".to_string(),
