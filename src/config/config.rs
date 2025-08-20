@@ -112,7 +112,7 @@ impl KeyCheckerConfig {
     /// Returns the complete Gemini API URL for generateContent endpoint
     pub fn gemini_api_url(&self) -> Url {
         self.api_host
-            .join("v1beta/models/gemini-2.5-flash-lite:generateContent")
+            .join("v1beta/models/gemini-2.5-flash:generateContent")
             .expect("Failed to join API URL")
     }
 
