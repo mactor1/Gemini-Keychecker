@@ -55,7 +55,7 @@ pub static GENERATE_CONTENT_TEST_BODY: LazyLock<Value> = LazyLock::new(|| {
             role: None,
         }],
         generation_config: Some(GenerationConfig {
-            thinking_config: Some(ThinkingConfig { thinking_budget: 0 }),
+            thinking_config: Some(ThinkingConfig { thinking_budget: 128 }),
         }),
         ttl: None,
     };
